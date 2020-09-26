@@ -42,8 +42,8 @@ class AWSAssumeRoleHelper(object):
 
         self._dump_config()
 
-        return "Added role '{0}' to the configuration. You can now assume this "\
-            "role with:\n\nassume switch {0}".format(name)
+        return "Added role '{0}' to the configuration. You can now assume this " \
+               "role with:\n\nassume switch {0}".format(name)
 
     def remove(self, name):
         self.config.pop(name)
@@ -51,23 +51,44 @@ class AWSAssumeRoleHelper(object):
         self._dump_config()
 
         return "Role '{}' removed from the configuration. Please note that if " \
-            "you are currently assuming this role, you still need to clear this " \
-            "with:\n\nassume clear".format(name)
+               "you are currently assuming this role, you still need to clear this " \
+               "with:\n\nassume clear".format(name)
 
     def list(self):
         return yaml.dump(self.config, default_flow_style=False)
 
-    def switch(self, name):
+    def switch(self, name, token_code):
         self.clear()
 
         role_arn = self.config[name]['role_arn']
+        profile = self.config[name]['profile']
 
         if 'profile' in self.config[name]:
-            session = boto3.session.Session(profile_name=self.config[name]['profile'])
+            session = boto3.session.Session(profile_name=profile)
         else:
             session = boto3.session.Session()
 
+        config_credentials = configparser.ConfigParser()
+        config_credentials.read(self.CREDENTIALS_FILENAME)
+        serial_number = config_credentials.get(profile, 'mfa_serial_number', fallback=None)
+
+        if serial_number is None and token_code is not None:
+            raise Exception('mfa_serial_number should not be empty in credentials')
+
         sts = session.client('sts')
+
+        if token_code is not None and serial_number is not None:
+            response = sts.get_session_token(
+                SerialNumber=serial_number,
+                TokenCode=token_code
+            )
+            access_key_id = response['Credentials']['AccessKeyId']
+            secret_access_key = response['Credentials']['SecretAccessKey']
+            session_token = response['Credentials']['SessionToken']
+
+            session = boto3.session.Session(aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key,
+                                            aws_session_token=session_token)
+            sts = session.client('sts')
 
         response = sts.assume_role(
             RoleArn=role_arn,
@@ -77,9 +98,6 @@ class AWSAssumeRoleHelper(object):
         access_key_id = response['Credentials']['AccessKeyId']
         secret_access_key = response['Credentials']['SecretAccessKey']
         session_token = response['Credentials']['SessionToken']
-
-        config_credentials = configparser.ConfigParser()
-        config_credentials.read(self.CREDENTIALS_FILENAME)
 
         credentials_file = open(self.CREDENTIALS_FILENAME, 'w')
 

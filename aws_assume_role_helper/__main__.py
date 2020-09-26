@@ -20,13 +20,15 @@ def main():
     elif arguments.command == 'list':
         print(commands.list())
     elif arguments.command == 'switch':
-        print(commands.switch(arguments.name))
+        if 'token_code' in arguments:
+            print(commands.switch(arguments.name, arguments.token_code))
+        else:
+            print(commands.switch(arguments.name))
     elif arguments.command == 'clear':
         print(commands.clear())
 
 
 def parse_arguments():
-
     parser = argparse.ArgumentParser(description='Helper to assume IAM roles in AWS')
     parser.add_argument('--version', '-v', action='version', version=__version__)
 
@@ -44,6 +46,7 @@ def parse_arguments():
 
     switch_parser = subparsers.add_parser('switch', help='Assume one of the added IAM roles')
     switch_parser.add_argument('name', help='Name of the role to assume')
+    switch_parser.add_argument('--token_code', default=None, help='Token Code of the mfa to assume')
 
     subparsers.add_parser('clear', help='Clear any currently assumed role')
 

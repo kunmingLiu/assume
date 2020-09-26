@@ -50,6 +50,10 @@ You can now `assume` this role as follows:
 assume switch myrole
 ```
 
+```bash
+assume switch myrole --token_code "123456"
+```
+
 `assume` keeps a configuration file in `~/.assume/config.yaml`. You can list the contents of the current configuration with the following file:
 
 ```bash

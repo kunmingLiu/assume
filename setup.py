@@ -5,15 +5,15 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name='assume',
+    name='assume_mfa',
     python_requires='>3.5.2',
     version=__version__,
-    description='Helper to easily assume IAM roles in AWS',
+    description='Helper to easily assume IAM roles with MFA in AWS',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='http://github.com/SanderKnape/assume',
-    author='Sander Knape',
-    author_email='s.knape88@gmail.com',
+    url='https://github.com/kunmingLiu/assume',
+    author='kunming0525',
+    author_email='kunming0525@gmail.com',
     license='MIT',
     packages=['aws_assume_role_helper'],
     entry_points={
